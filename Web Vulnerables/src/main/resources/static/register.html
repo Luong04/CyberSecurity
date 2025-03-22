@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sign up</title>
+    <script>
+        async function registerUser(e) {
+            console.log("goi duoc func");
+            e.preventDefault(); // Ngăn form reload trang
+
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            let licenseId = document.getElementById("licenseId").value;
+
+            let response = await fetch('/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'username': username,
+                    'password': password,
+                    'licenseId': licenseId
+                })
+            });
+            console.log("response ne:", response);
+            if (response.ok) {
+                window.location.href = "/login"; // Chuyển hướng sau khi đăng ký thành công
+            } else {
+                alert("Can't sign up");
+            }
+        }
+    </script>
+</head>
+<body>
+<h2>Sign up</h2>
+<form onsubmit="registerUser(event)">
+    <label>Username</label>
+    <input type="text" id="username" name="username" required><br>
+
+    <label>Password</label>
+    <input type="password" id="password" name="password" required><br>
+
+    <label>License ID</label>
+    <input type="text" id="licenseId" name="licenseId" required><br>
+
+    <button type="submit">Sign up</button>
+</form>
+<p th:if="${error}" th:text="${error}" style="color:red;"></p>
+</body>
+</html>

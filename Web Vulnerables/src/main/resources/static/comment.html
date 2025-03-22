@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống bình luận</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .login-required {
+            text-align: center;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .login-required a {
+            color: #0066cc;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .login-required a:hover {
+            text-decoration: underline;
+        }
+        .comment-form {
+            margin-bottom: 30px;
+        }
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 100px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            float: right;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        .comments-section {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .comment {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .username {
+            font-weight: bold;
+            color: #333;
+        }
+        .timestamp {
+            color: #777;
+            font-size: 0.9em;
+        }
+        .comment-content {
+            line-height: 1.5;
+            color: #444;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        .no-comments {
+            text-align: center;
+            color: #777;
+            padding: 20px;
+        }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Bình Luận</h1>
+
+    <div id="loginMessage" class="login-required">
+        Bạn cần <a href="/login">đăng nhập</a> để xem và thêm bình luận.
+    </div>
+
+    <div id="commentSystem" style="display: none;">
+        <div class="comment-form">
+            <h2>Thêm bình luận mới</h2>
+            <form id="commentForm">
+                <textarea id="commentContent" placeholder="Nhập bình luận của bạn ở đây..."></textarea>
+                <div class="clearfix">
+                    <button type="submit" class="submit-btn">Gửi bình luận</button>
+                </div>
+                <div id="errorMsg" class="error-message"></div>
+                <div id="successMsg" class="success-message"></div>
+            </form>
+        </div>
+
+        <div class="comments-section">
+            <h2>Tất cả bình luận</h2>
+            <div id="commentsContainer">
+                <!-- Comments will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is logged in
+        checkLoginStatus();
+
+        // Add event listener to comment form
+        document.getElementById('commentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitComment();
+        });
+    });
+
+    function checkLoginStatus() {
+        // Send a request to check if the user is logged in
+        // For simplicity, we'll use the /comment/all endpoint
+        fetch('/comment/all', {
+            method: 'GET',
+            credentials: 'include'  // Include cookies for session
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    // Unauthorized - user not logged in
+                    document.getElementById('loginMessage').style.display = 'block';
+                    document.getElementById('commentSystem').style.display = 'none';
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch comments');
+                }
+
+                // User is logged in
+                document.getElementById('loginMessage').style.display = 'none';
+                document.getElementById('commentSystem').style.display = 'block';
+
+                return response.json();
+            })
+            .then(comments => {
+                // Load comments
+                displayComments(comments);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // If error is not Unauthorized, show error message
+                if (error.message !== 'Unauthorized') {
+                    showError('Không thể tải bình luận. Vui lòng thử lại sau.');
+                }
+            });
+    }
+
+    function displayComments(comments) {
+        const commentsContainer = document.getElementById('commentsContainer');
+        commentsContainer.innerHTML = '';
+
+        if (!comments || comments.length === 0) {
+            commentsContainer.innerHTML = '<div class="no-comments">Chưa có bình luận nào.</div>';
+            return;
+        }
+
+        comments.forEach(comment => {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'comment';
+
+            // Format date
+            const date = new Date(comment.createdAt);
+            const formattedDate = formatDate(date);
+
+            commentElement.innerHTML = `
+                    <div class="comment-header">
+                        <span class="username">${comment.username}</span>
+                        <span class="timestamp">${formattedDate}</span>
+                    </div>
+                    <div class="comment-content">${comment.content}</div>
+                `;
+
+            commentsContainer.appendChild(commentElement);
+        });
+    }
+
+    function submitComment() {
+        const commentContent = document.getElementById('commentContent').value.trim();
+
+        if (!commentContent) {
+            showError('Vui lòng nhập nội dung bình luận');
+            return;
+        }
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('comment', commentContent);
+
+        fetch('/comment/addComment', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'  // Include cookies for session
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    // User not logged in
+                    document.getElementById('loginMessage').style.display = 'block';
+                    document.getElementById('commentSystem').style.display = 'none';
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Lỗi khi thêm bình luận');
+                    });
+                }
+
+                return response.text();
+            })
+            .then(result => {
+                // Show success message
+                showSuccess('Bình luận đã được thêm thành công!');
+
+                // Clear the form
+                document.getElementById('commentContent').value = '';
+
+                // Reload comments
+                loadComments();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (error.message !== 'Unauthorized') {
+                    showError(error.message || 'Lỗi khi thêm bình luận. Vui lòng thử lại sau.');
+                }
+            });
+    }
+
+    function loadComments() {
+        fetch('/comment/all', {
+            method: 'GET',
+            credentials: 'include'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Lỗi khi tải bình luận');
+                }
+                return response.json();
+            })
+            .then(comments => {
+                displayComments(comments);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Không thể tải bình luận. Vui lòng thử lại sau.');
+            });
+    }
+
+    function showError(message) {
+        const errorMsg = document.getElementById('errorMsg');
+        errorMsg.textContent = message;
+        errorMsg.style.display = 'block';
+
+        // Hide success message if visible
+        document.getElementById('successMsg').style.display = 'none';
+
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            errorMsg.style.display = 'none';
+        }, 5000);
+    }
+
+    function showSuccess(message) {
+        const successMsg = document.getElementById('successMsg');
+        successMsg.textContent = message;
+        successMsg.style.display = 'block';
+
+        // Hide error message if visible
+        document.getElementById('errorMsg').style.display = 'none';
+
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            successMsg.style.display = 'none';
+        }, 5000);
+    }
+
+    function formatDate(date) {
+        return `${padZero(date.getDate())}/${padZero(date.getMonth() + 1)}/${date.getFullYear()} ${padZero(date.getHours())}:${padZero(date.getMinutes())}`;
+    }
+
+    function padZero(num) {
+        return num < 10 ? '0' + num : num;
+    }
+
+    // function escapeHtml(str) {
+    //     return str
+    //         .replace(/&/g, "&amp;")
+    //         .replace(/</g, "&lt;")
+    //         .replace(/>/g, "&gt;")
+    //         .replace(/"/g, "&quot;")
+    //         .replace(/'/g, "&#039;");
+    // }
+</script>
+</body>
+</html>

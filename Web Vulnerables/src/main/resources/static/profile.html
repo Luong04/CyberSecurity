@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ cá nhân</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        .pet {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Hồ sơ cá nhân</h1>
+<p><strong>Username:</strong> <span id="username"></span></p>
+<p><strong>License ID:</strong> <span id="licenseId"></span></p>
+
+<h2>Danh sách thú cưng:</h2>
+<div id="petList"></div>
+
+<script>
+    async function loadProfile() {
+        try {
+            let response = await fetch('/api/profile');
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            console.log("response: ", response);
+            let data = await response.json();
+
+            console.log("data: ", data);
+            // Hiển thị thông tin người dùng
+            document.getElementById("username").textContent = data.username;
+            document.getElementById("licenseId").textContent = data.licenseId;
+
+            // Hiển thị danh sách thú cưng
+            let petList = document.getElementById("petList");
+            petList.innerHTML = ""; // Xóa nội dung cũ
+
+            data.listPet.forEach(pet => {
+                console.log("pet: ", pet);
+                let petDiv = document.createElement("div");
+                petDiv.classList.add("pet");
+
+                petDiv.innerHTML = `
+                        <img src="/uploads/${pet.imagePath}" alt="Ảnh thú cưng">
+                        <p><strong>Tên:</strong> ${pet.petName}</p>
+                        <p><strong>Loài:</strong> ${pet.species}</p>
+                    `;
+
+                petList.appendChild(petDiv);
+            });
+
+        } catch (error) {
+            alert("Lỗi tải hồ sơ: " + error.message);
+        }
+    }
+
+    // Gọi API khi trang tải xong
+    window.onload = loadProfile;
+</script>
+</body>
+</html>

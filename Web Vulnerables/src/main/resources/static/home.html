@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .createPet {
+            background-color: #28a745;
+            color: white;
+        }
+        .profile {
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+    </style>
+    <script>
+        function goToCreatePet() {
+            window.location.href = "/user/createPet";
+        }
+        function goToProfile() {
+            window.location.href = "/user/profile";
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1>Chào mừng đến với Trang Home</h1>
+    <button class="createPet" onclick="goToCreatePet()">Tạo Pet Mới</button>
+    <button class="profile" onclick="goToProfile()">Profile</button>
+</div>
+</body>
+</html>

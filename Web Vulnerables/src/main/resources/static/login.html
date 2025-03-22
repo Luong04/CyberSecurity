@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault(); // Ngăn chặn reload trang
+
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+
+            let response = await fetch("/auth/login", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'username': username, 'password': password })
+            });
+
+            if (response.ok) {
+                window.location.href = "/home"; // Chuyển hướng sau khi đăng nhập thành công
+            } else {
+                alert("Sai tài khoản hoặc mật khẩu!"); // Hiển thị thông báo lỗi
+            }
+        }
+    </script>
+</head>
+<body>
+<h2>Login</h2>
+<form onsubmit="handleLogin(event)">
+    <label>Username:</label>
+    <input type="text" id="username" name="username" required><br>
+
+    <label>Password:</label>
+    <input type="password" id="password" name="password" required><br>
+
+    <button type="submit">Login</button>
+</form>
+<p th:if="${error}" th:text="${error}" style="color:red;"></p>
+</body>
+</html>
