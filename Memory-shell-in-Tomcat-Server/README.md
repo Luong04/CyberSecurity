@@ -3,8 +3,6 @@
 ## Mục đích
 * Mô tả lỗ hổng file upload trong jsp servlet chạy Tomcat server cho phép upload và thực thi shell
 * Kiểm thử memory shell trong tomcat server
-## Download
->gitclone https://github.com/HoangVietAnh09/Memory-shell-in-Tomcat-Server.git
 ## Run
 Chạy với IDE intellij trên hệ điều hành window
 ## Quá trình kiểm thử
